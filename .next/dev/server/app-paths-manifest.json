@@ -1,0 +1,22 @@
+{
+  "/(landing)/page": "app/(landing)/page.js",
+  "/about/page": "app/about/page.js",
+  "/booking/page": "app/booking/page.js",
+  "/contact/page": "app/contact/page.js",
+  "/customer-home/page": "app/customer-home/page.js",
+  "/customer/profile/page": "app/customer/profile/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/priest-home/page": "app/priest-home/page.js",
+  "/priest/bookings/page": "app/priest/bookings/page.js",
+  "/priest/calendar/page": "app/priest/calendar/page.js",
+  "/priest/dashboard/page": "app/priest/dashboard/page.js",
+  "/priest/login/page": "app/priest/login/page.js",
+  "/priest/notifications/page": "app/priest/notifications/page.js",
+  "/priest/profile/page": "app/priest/profile/page.js",
+  "/priest/register/page": "app/priest/register/page.js",
+  "/search/page": "app/search/page.js",
+  "/services/page": "app/services/page.js",
+  "/signup/page": "app/signup/page.js"
+}
