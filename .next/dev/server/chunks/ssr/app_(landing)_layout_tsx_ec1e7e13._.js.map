@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/anamikakumari/Downloads/code/app/%28landing%29/layout.tsx"],"sourcesContent":["import { AppProvider } from '@/context/app-context'\nimport { ToastContainer } from '@/components/toast-container'\n\nexport default function LandingLayout({\n  children,\n}: {\n  children: React.ReactNode\n}) {\n  return (\n    <AppProvider>\n      {children}\n      <ToastContainer />\n    </AppProvider>\n  )\n}\n"],"names":[],"mappings":";;;;;AAAA;AACA;;;;AAEe,SAAS,cAAc,EACpC,QAAQ,EAGT;IACC,qBACE,8OAAC,yIAAW;;YACT;0BACD,8OAAC,mJAAc;;;;;;;;;;;AAGrB"}}]
-}

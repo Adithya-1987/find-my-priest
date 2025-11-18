@@ -5,6 +5,7 @@ import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Mail, Lock, Eye, EyeOff, User, Shield, Calendar, Star, ChevronRight, Check, X, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useAppContext } from '@/context/app-context'
 import { useToastNotification } from '@/hooks/use-toast-notification'
@@ -86,21 +87,16 @@ export default function LoginPage() {
     }, 2000)
   }
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true)
-    // Simulate Google auth
-    setTimeout(() => {
-      setShowSuccessAnimation(true)
-      if (userType === 'priest') {
-        setCurrentUser({ id: 'google-priest', name: 'Google Priest', role: 'priest' })
-        toast.success('Welcome back, Priest!')
-        setTimeout(() => router.push('/priest/dashboard'), 1500)
-      } else {
-        setCurrentUser({ id: 'google-user', name: 'Google User', role: 'user' })
-        toast.success('Welcome back!')
-        setTimeout(() => router.push('/dashboard'), 1500)
-      }
-    }, 1500)
+    try {
+      await signIn('google', { callbackUrl: '/' })
+    } catch (error) {
+      console.error('Google sign in error:', error)
+      toast.error('Failed to sign in with Google')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { AppProvider } from '@/context/app-context'
+import { AuthProvider } from '@/components/session-provider'
 import { ToastContainer } from '@/components/toast-container'
 import { Navbar } from '@/components/navbar'
 
@@ -25,11 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AppProvider>
-          <Navbar />
-          {children}
-          <ToastContainer />
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <Navbar />
+            {children}
+            <ToastContainer />
+          </AppProvider>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useAppContext } from '@/context/app-context'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const { data: session } = useSession()
   const { currentUser, setCurrentUser } = useAppContext()
 
   const publicLinks = [
@@ -61,13 +63,18 @@ export function Navbar() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex gap-3">
-            {currentUser ? (
-              <Button
-                variant="outline"
-                onClick={() => setCurrentUser(null)}
-              >
-                Logout
-              </Button>
+            {session ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {session.user?.name}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => signOut()}
+                >
+                  Logout
+                </Button>
+              </div>
             ) : (
               <>
                 <Button variant="outline" asChild>
@@ -103,10 +110,15 @@ export function Navbar() {
               </Link>
             ))}
             <div className="space-y-2 pt-2 border-t border-border">
-              {currentUser ? (
-                <Button variant="outline" className="w-full" onClick={() => setCurrentUser(null)}>
-                  Logout
-                </Button>
+              {session ? (
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground px-2">
+                    {session.user?.name}
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={() => signOut()}>
+                    Logout
+                  </Button>
+                </div>
               ) : (
                 <>
                   <Button variant="outline" className="w-full" asChild>
