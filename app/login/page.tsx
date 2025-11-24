@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Mail, Lock, Eye, EyeOff, User, Shield, Calendar, Star, ChevronRight, Check, X, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
@@ -10,7 +10,7 @@ import { useAppContext } from '@/context/app-context'
 import { useToastNotification } from '@/hooks/use-toast-notification'
 import { supabase } from '@/lib/supabaseClient'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [userType, setUserType] = useState<'customer' | 'priest'>('customer')
   const [isLoading, setIsLoading] = useState(false)
@@ -372,5 +372,13 @@ export default function LoginPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/footer'
 import { Mail, User, ArrowLeft, ArrowRight, Loader2, CheckCircle } from 'lucide-react'
@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAppContext } from '@/context/app-context'
 
-export default function SignupPage() {
+function SignupPageContent() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [emailLocked, setEmailLocked] = useState(false)
@@ -257,5 +257,13 @@ export default function SignupPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
+      <SignupPageContent />
+    </Suspense>
   )
 }
