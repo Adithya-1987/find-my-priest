@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
-import { Calendar, MapPin, Clock, Edit, Settings, LogOut, Heart, Star, MessageSquare, Bell, X, Check } from 'lucide-react'
+import { Calendar, MapPin, Clock, Edit, Settings, LogOut, Heart, Star, MessageSquare, Bell, X, Check, Loader2 } from 'lucide-react'
 import { mockBookings, mockNotifications } from '@/lib/mock-data'
 import { useToastNotification } from '@/hooks/use-toast-notification'
 import { ConfirmationModal } from '@/components/confirmation-modal'
@@ -12,6 +12,7 @@ import { Modal } from '@/components/modal'
 import Link from 'next/link'
 import { useAppContext } from '@/context/app-context'
 import { useRouter } from 'next/navigation'
+import { useRequireCustomer } from '@/hooks/use-require-customer'
 
 export default function UserDashboardPage() {
   const { currentUser } = useAppContext()
@@ -25,6 +26,16 @@ export default function UserDashboardPage() {
   const [reviewText, setReviewText] = useState('')
   const [userNotifications, setUserNotifications] = useState(mockNotifications)
   const toast = useToastNotification()
+  const { checking } = useRequireCustomer()
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Verifying your account…</p>
+      </div>
+    )
+  }
 
   useEffect(() => {
     setIsLoaded(true)

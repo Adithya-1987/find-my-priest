@@ -1,16 +1,90 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
-import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useAppContext } from '@/context/app-context'
+import { supabase } from '@/lib/supabaseClient'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const { data: session } = useSession()
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const { currentUser, setCurrentUser } = useAppContext()
+  const router = useRouter()
+  const supabaseLinkedRef = useRef(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    const syncFromSupabase = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (!mounted || !user?.email) {
+          if (mounted && supabaseLinkedRef.current) {
+            supabaseLinkedRef.current = false
+            setCurrentUser(null)
+          }
+          return
+        }
+
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('full_name')
+          .eq('email', user.email)
+          .maybeSingle()
+
+        if (!mounted) {
+          return
+        }
+
+        if (customer?.full_name) {
+          supabaseLinkedRef.current = true
+          setCurrentUser({
+            id: user.id,
+            name: customer.full_name,
+            role: 'user',
+          })
+        } else if (supabaseLinkedRef.current) {
+          supabaseLinkedRef.current = false
+          setCurrentUser(null)
+        }
+      } catch (error) {
+        console.error('[NAVBAR_SUPABASE_SYNC]', error)
+      }
+    }
+
+    syncFromSupabase()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      syncFromSupabase()
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [setCurrentUser])
+
+  const handleLogout = async () => {
+    setIsSigningOut(true)
+    try {
+      await supabase.auth.signOut()
+      supabaseLinkedRef.current = false
+      setCurrentUser(null)
+      router.push('/login')
+    } catch (error) {
+      console.error('[NAVBAR_LOGOUT]', error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
   const publicLinks = [
     { href: '/', label: 'Home' },
@@ -35,6 +109,7 @@ export function Navbar() {
   ]
 
   const links = currentUser?.role === 'priest' ? priestLinks : currentUser?.role === 'user' ? customerLinks : publicLinks
+  const firstName = currentUser?.name ? currentUser.name.split(' ')[0] : null
 
   return (
     <nav className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
@@ -62,19 +137,18 @@ export function Navbar() {
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex gap-3">
-            {session ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">
-                  {session.user?.name}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => signOut()}
-                >
-                  Logout
-                </Button>
-              </div>
+          <div className="hidden md:flex gap-3 items-center">
+            {firstName && (
+              <span className="text-sm text-muted-foreground">Hi, {firstName}</span>
+            )}
+            {currentUser ? (
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                disabled={isSigningOut}
+              >
+                {isSigningOut ? 'Signing out…' : 'Logout'}
+              </Button>
             ) : (
               <>
                 <Button variant="outline" asChild>
@@ -110,15 +184,22 @@ export function Navbar() {
               </Link>
             ))}
             <div className="space-y-2 pt-2 border-t border-border">
-              {session ? (
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground px-2">
-                    {session.user?.name}
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={() => signOut()}>
-                    Logout
+              {currentUser ? (
+                <>
+                  {firstName && (
+                    <p className="text-sm text-muted-foreground text-center">
+                      Hi, {firstName}
+                    </p>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleLogout}
+                    disabled={isSigningOut}
+                  >
+                    {isSigningOut ? 'Signing out…' : 'Logout'}
                   </Button>
-                </div>
+                </>
               ) : (
                 <>
                   <Button variant="outline" className="w-full" asChild>

@@ -5,15 +5,17 @@ import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Mail, Lock, Eye, EyeOff, User, Shield, Calendar, Star, ChevronRight, Check, X, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppContext } from '@/context/app-context'
 import { useToastNotification } from '@/hooks/use-toast-notification'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [userType, setUserType] = useState<'customer' | 'priest'>('customer')
   const [isLoading, setIsLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{email?: string, password?: string}>({})
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { setCurrentUser } = useAppContext()
   const toast = useToastNotification()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     setIsLoaded(true)
@@ -33,6 +36,13 @@ export default function LoginPage() {
       setRememberMe(true)
     }
   }, [])
+
+  useEffect(() => {
+    const errorMessage = searchParams.get('error')
+    if (errorMessage) {
+      setGoogleError(errorMessage)
+    }
+  }, [searchParams])
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {}
@@ -88,14 +98,29 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true)
+    setGoogleError(null)
+    setGoogleLoading(true)
+
+    const redirectTo =
+      process.env.NEXT_PUBLIC_SITE_URL
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+        : 'http://localhost:3000/auth/callback'
+
     try {
-      await signIn('google', { callbackUrl: '/' })
-    } catch (error) {
-      console.error('Google sign in error:', error)
-      toast.error('Failed to sign in with Google')
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      })
+
+      if (error) {
+        console.error('[GOOGLE_OAUTH]', error)
+        setGoogleError(error.message)
+      }
+    } catch (err) {
+      console.error('[GOOGLE_OAUTH]', err)
+      setGoogleError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
-      setIsLoading(false)
+      setGoogleLoading(false)
     }
   }
 
@@ -257,7 +282,7 @@ export default function LoginPage() {
 
               <Button 
                 type="submit" 
-                disabled={isLoading}
+              disabled={isLoading}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isLoading ? (
@@ -285,14 +310,14 @@ export default function LoginPage() {
 
             <Button
               variant="outline"
-              disabled={isLoading}
+              disabled={isLoading || googleLoading}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-lg transition-all duration-300 hover:shadow-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               onClick={handleGoogleLogin}
             >
-              {isLoading ? (
+              {googleLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
+                  Signing in...
                 </>
               ) : (
                 <>
@@ -307,13 +332,19 @@ export default function LoginPage() {
               )}
             </Button>
 
+            {googleError && (
+              <p className="text-center text-sm text-red-500 mt-2">
+                {googleError}
+              </p>
+            )}
+
             <p className="text-center text-sm text-muted-foreground mt-6">
               Don't have an account?{' '}
               <Link href="/priest/register" className="text-primary hover:underline font-semibold transition-all duration-200 hover:text-primary/80">
                 Sign up as Priest
               </Link>
               {' '}or{' '}
-              <Link href="#" className="text-primary hover:underline font-semibold transition-all duration-200 hover:text-primary/80">
+              <Link href="/signup" className="text-primary hover:underline font-semibold transition-all duration-200 hover:text-primary/80">
                 Sign up as Customer
               </Link>
             </p>
