@@ -41,8 +41,27 @@ function LoginPageContent() {
     const errorMessage = searchParams.get('error')
     if (errorMessage) {
       setGoogleError(errorMessage)
+      return
     }
-  }, [searchParams])
+
+    // Check if user is logged in after OAuth
+    const checkCustomerAndRedirect = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('id, full_name, email')
+          .eq('email', user.email)
+          .maybeSingle();
+        if (!customer) {
+          router.replace('/signup');
+        } else {
+          router.replace('/dashboard');
+        }
+      }
+    };
+    checkCustomerAndRedirect();
+  }, [searchParams, router])
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {}
@@ -100,27 +119,23 @@ function LoginPageContent() {
   const handleGoogleLogin = async () => {
     setGoogleError(null)
     setGoogleLoading(true)
-
-    const redirectTo =
-      process.env.NEXT_PUBLIC_SITE_URL
-        ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-        : 'http://localhost:3000/auth/callback'
-
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo },
-      })
-
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/callback?next=/login`,
+        },
+      });
       if (error) {
-        console.error('[GOOGLE_OAUTH]', error)
-        setGoogleError(error.message)
+        console.error('[GOOGLE_LOGIN_ERROR]', error);
+        setGoogleError(error.message);
       }
-    } catch (err) {
-      console.error('[GOOGLE_OAUTH]', err)
-      setGoogleError(err instanceof Error ? err.message : 'Something went wrong')
+      // Supabase will redirect; no manual navigation here.
+    } catch (e: any) {
+      console.error('[GOOGLE_LOGIN_UNEXPECTED]', e);
+      setGoogleError(e?.message ?? 'Something went wrong');
     } finally {
-      setGoogleLoading(false)
+      setGoogleLoading(false);
     }
   }
 
